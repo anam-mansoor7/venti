@@ -32,13 +32,19 @@ class Venti
   def unvac(filename)
     #file_details = File.read(filename).gsub(/[{}:]/,'').split(', ').map{|h| h1,h2 = h.split('=>'); {h1 => h2}}.reduce(:merge)
     file_details = Marshal.load(File.read(filename))
-    binding.pry
-    file = @directory + '/' + Base32.encode(file_details[:address]) + '.dat'
-    contents = File.read(file)
-     binding.pry
+    file = file_path(file_details[:address])
+
+    File.open(file, "rb") do |file| 
+      stuff = file.read
+    end 
+    #contents = File.read(file)
   end
 
   private
+
+  def file_path(hash)
+    @directory + '/' + Base32.encode(hash) + '.dat'
+  end
   
   #range = 5 for pointer blks and 100 for data blks
   def write_blocks(data, range)
@@ -57,8 +63,7 @@ class Venti
   end
 
   def write_block(address, data)
-
-    block_address = @directory + '/'+ Base32.encode(address) + '.dat'
+    block_address = file_path(address)
     #TODO: make the .dat file hidden and binary
     unless File.file?(block_address)
       File.open(block_address , "wb") do |file| 
