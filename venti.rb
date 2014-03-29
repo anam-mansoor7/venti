@@ -32,20 +32,52 @@ class Venti
   def unvac(filename)
     #file_details = File.read(filename).gsub(/[{}:]/,'').split(', ').map{|h| h1,h2 = h.split('=>'); {h1 => h2}}.reduce(:merge)
     file_details = Marshal.load(File.read(filename))
-    file = file_path(file_details[:address])
-
-    File.open(file, "rb") do |file| 
-      stuff = file.read
-    end 
+   
     #contents = File.read(file)
+    file_date = traverse(file_details[:address])
+
+    File.open(file_details[:name], "w+") do |file| 
+      file.write(file_date)
+    end 
   end
 
   private
 
+  def traverse(node)
+    file_data = ""
+    q = [] 
+    q << node
+    
+    while !q.empty?
+      score = q.shift
+      node = read_block(score)
+      if node.nil?
+        file_data += score
+      else  
+        children = node.chars.each_slice(20).map(&:join)
+        children.each do |c|
+          q << c
+        end
+      end
+    end
+
+    file_data
+  end
+
   def file_path(hash)
     @directory + '/' + Base32.encode(hash) + '.dat'
   end
-  
+
+  def read_block(address)
+    file = file_path(address)
+    contents = nil
+    if File.file?(file)
+      File.open(file, "rb") do |file| 
+        contents = file.read
+      end
+    end   
+    contents
+  end   
   #range = 5 for pointer blks and 100 for data blks
   def write_blocks(data, range)
     address_list = []
@@ -74,5 +106,5 @@ class Venti
 end
 
 v = Venti.new
-v.vac('test.txt')
-v.unvac('test.vac')
+v.vac('aa.xlsx')
+v.unvac('aa.vac')
