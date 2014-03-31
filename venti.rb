@@ -1,6 +1,7 @@
 require 'digest/sha1'
 require 'pry'
 require "base32"
+require_relative "file"
 
 class Venti
   def initialize(directory = 'venti')
@@ -14,7 +15,13 @@ class Venti
     if File.file?(filename)
       puts 'vac in progress ...'
       data = File.read(filename)
-      address_list = write_blocks(data, 100)
+      address_list = []
+
+      File.open(filename,'rb') do |f|
+        f.each_chunk(10000) do |c| 
+          address_list += write_blocks(c, 100)
+        end
+      end
 
       #TODO: further investigate the condition whether to set address_list to nil on the first step?
       while address_list.size != 1 do
@@ -41,36 +48,38 @@ class Venti
 
     #file_details = File.read(filename).gsub(/[{}:]/,'').split(', ').map{|h| h1,h2 = h.split('=>'); {h1 => h2}}.reduce(:merge)
     #contents = File.read(file)
-    file_date = traverse(file_details[:address])
+    file_date = traverse(file_details[:address], file_details[:name])
     
-    File.open(file_details[:name], "w+") do |file| 
-      file.write(file_date)
-    end
+    # File.open(file_details[:name], "w+") do |file| 
+    #   file.write(file_date)
+    # end
 
     puts "unvac completed successfully"
   end
 
   private
 
-  def traverse(node)
+  def traverse(node, filename)
     file_data = ""
     q = [] 
     q << node
     
-    while !q.empty?
-      score = q.shift
-      node = read_block(score)
-      if node.nil?
-        file_data += score
-      else  
-        children = node.chars.each_slice(20).map(&:join)
-        children.each do |c|
-          q << c
+    open(filename, 'a') do |f|
+      while !q.empty?
+        score = q.shift
+        node = read_block(score)
+        if node.nil?
+          #file_data += score
+            f << score
+        else  
+          children = node.chars.each_slice(20).map(&:join)
+          children.each do |c|
+            q << c
+          end
         end
       end
     end
-
-    file_data
+    #file_data
   end
 
   def file_path(hash)
