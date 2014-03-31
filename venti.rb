@@ -3,42 +3,51 @@ require 'pry'
 require "base32"
 
 class Venti
-  def initialize
+  def initialize(directory = 'venti')
     @block_size = 100
-    @directory = 'venti'
+    @directory = directory
     Dir.mkdir @directory unless File.directory?(@directory)
   end
   
   #TODO: remove default value of file name
-  def vac(filename = 'test.txt')
-    data = File.read(filename)
-    address_list = write_blocks(data, 100)
+  def vac(filename)
+    if File.file?(filename)
+      puts 'vac in progress ...'
+      data = File.read(filename)
+      address_list = write_blocks(data, 100)
 
-    #TODO: further investigate the condition whether to set address_list to nil on the first step?
-    while address_list.size != 1 do
-      address_list = write_blocks(address_list, 5)	
+      #TODO: further investigate the condition whether to set address_list to nil on the first step?
+      while address_list.size != 1 do
+        address_list = write_blocks(address_list, 5)	
+      end
+
+      vacfile = filename.chomp(File.extname(filename)) + ".vac"
+
+      #convert the hash to bin before writing
+      file_details = {name: filename, size: data.size, address: address_list.first, directory: @directory}
+
+      File.open(vacfile , "wb") do |file| 
+        file.write(Marshal.dump(file_details))
+      end 
+
+      puts "vac completed successfully"
+    else
+      puts "Error #{filename} does not exist" 
     end
-
-    vacfile = filename.chomp(File.extname(filename)) + ".vac"
-
-    #convert the hash to bin before writing
-    file_details = {name: filename, size: data.size, address: address_list.first}
-
-    File.open(vacfile , "wb") do |file| 
-      file.write(Marshal.dump(file_details))
-    end 
   end
 
-  def unvac(filename)
+  def unvac(file_details)
+    puts 'unvac in progress ...'
+
     #file_details = File.read(filename).gsub(/[{}:]/,'').split(', ').map{|h| h1,h2 = h.split('=>'); {h1 => h2}}.reduce(:merge)
-    file_details = Marshal.load(File.read(filename))
-   
     #contents = File.read(file)
     file_date = traverse(file_details[:address])
-
+    
     File.open(file_details[:name], "w+") do |file| 
       file.write(file_date)
-    end 
+    end
+
+    puts "unvac completed successfully"
   end
 
   private
@@ -79,6 +88,7 @@ class Venti
     contents
   end   
   #range = 5 for pointer blks and 100 for data blks
+  #type = 0 for pointer blks and 1 for data blks
   def write_blocks(data, range)
     address_list = []
     length       = (data.size.to_f / range).ceil
@@ -105,6 +115,4 @@ class Venti
   end
 end
 
-v = Venti.new
-v.vac('aa.xlsx')
-v.unvac('aa.vac')
+
