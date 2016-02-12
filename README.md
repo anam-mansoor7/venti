@@ -2,7 +2,7 @@
 This is an implementation of vac and unvac functionality of venti. For further details read the full research paper. https://www.usenix.org/conference/fast-02/venti-new-approach-archival-data-storage 
 #Technical Details
 Tested with ruby 2.0 
-Also installed an additional gem/library base32  
+you will need an additional gem base32 for this code to work  
 To execute the var functionality 
 ruby vac.rb <dir_name> <filename> 
 to execute the unvar functionality 
