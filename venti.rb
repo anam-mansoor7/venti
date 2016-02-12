@@ -1,5 +1,5 @@
 require 'digest/sha1'
-require 'pry'
+#require 'pry'
 require "base32"
 require_relative "file"
 

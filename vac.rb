@@ -1,5 +1,6 @@
 require_relative 'venti'
 
+
 if ARGV.size > 1
 	directory = ARGV[0]
 	filename = ARGV[1]
